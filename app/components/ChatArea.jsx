@@ -15,8 +15,6 @@ import {
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Markdown from 'react-native-markdown-display';
 import EventSource from 'react-native-event-source';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker'; 
 import styles from "../Styles";
 
 const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker }) => {
@@ -61,12 +59,13 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         });
 
         const result = await response.json();
-        context = result.english_translation;
+        context = result.context;
+        console.log(result)
 
         setMessages((prevMessages) => [
           ...prevMessages,
           { id: Date.now().toString() + "4", text: `Extracted Text:\n\n ${result.context}`, isUser: false },
-          { id: Date.now().toString() + "5", text: `Translated Text:\n\n ${context}`, isUser: false },
+          // { id: Date.now().toString() + "5", text: `Translated Text:\n\n ${context}`, isUser: false },
         ]);
         setFile(false); 
       }
@@ -74,7 +73,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       // Add bot placeholder message after user message
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: botMessageId, text: "Loading...", isUser: false },
+        { id: botMessageId, text: "", isUser: false },
       ]);
 
       const url = `http://192.168.1.242:8000/stream`;  
@@ -146,6 +145,11 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     alert("Text copied to clipboard!");
   };
 
+  const rows = [
+    { id: 1, col1: 12251, col2: 11222, col3: 41522, col4: 16255, col5: 11221 },
+    {id: 2, col1:1111, col2: 1144, col3:7777, col4: 9999, col5:777888}
+  ];
+
   const renderMessage = ({ item }) => {
     return (
       <View>
@@ -173,7 +177,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           </View>
         ) : item.role === "db" ? (
           <View>
-            <Datatable />
+            <Datatable rows = {rows}/>
           </View>
         ) : item.role === "doc" ? (
           <View style={styles.iconContainer}>
