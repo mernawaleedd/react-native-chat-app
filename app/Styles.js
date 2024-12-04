@@ -200,7 +200,15 @@ const styles = StyleSheet.create({
     fontSize: 14,        
     marginBottom:10,
     marginTop:-10,
-  }  
+  } ,
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    // backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  } 
 });
 
 export default styles;

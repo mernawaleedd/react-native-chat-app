@@ -35,12 +35,15 @@ const Dropdowns = () => {
     { label: "جدول العملاء", value: "customers" },
     { label: "جدول المنتجات", value: "products" },
   ]);
-
+  const [error, setError] = useState("");
   const router = useRouter();
-  // const handleSelect = () => {
-  //   router.replace("ChatPage");
-  // };
-
+ const submitForm=()=>{
+    if (!value1 || !value2 || !value3 || !value4) {
+      setError("Please Select Item");
+    } else {
+      router.replace('ChatPage');
+ }
+}
   return (
     <View style={styles.container}>
       <View style={[styles.dropdownContainer, { zIndex: open1 ? 4 : 0 }]}>
@@ -55,7 +58,6 @@ const Dropdowns = () => {
           placeholder="اختر القطاع"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          // onChangeValue={handleSelect} 
         />
       </View>
 
@@ -71,7 +73,6 @@ const Dropdowns = () => {
           placeholder="اختر الإدارة"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          // onChangeValue={handleSelect}
         />
       </View>
 
@@ -87,7 +88,6 @@ const Dropdowns = () => {
           placeholder="اختر الموضوع"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          // onChangeValue={handleSelect} 
         />
       </View>
 
@@ -107,7 +107,7 @@ const Dropdowns = () => {
         />
       </View>
 
-      <TouchableOpacity style={styles.submitButton} onPress={() => router.replace('ChatPage')}
+      <TouchableOpacity style={styles.submitButton} onPress={submitForm}
       >
         <Text style={styles.submitButtonText}>دخول</Text>
       </TouchableOpacity>

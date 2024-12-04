@@ -8,6 +8,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 
 export default function ChatPage() {
+  const [file, setFile] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const router = useRouter();
@@ -32,8 +33,15 @@ export default function ChatPage() {
 
   const openDocumentPicker = async () => {
     const result = await DocumentPicker.getDocumentAsync({});
-    if (result.type === "success") {
-      console.log("Picked document URI:", result.uri);
+    console.log(result)
+    if (result.canceled === false) {
+      console.log("Picked document URI:");
+      setFile(result.assets[0])
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: Date.now().toString(), text: `📄${result.assets[0].name}`, isUser: true },
+      ]);
+      console.log(result.assets[0])
     }
   };
 
@@ -61,8 +69,8 @@ export default function ChatPage() {
         <ChatArea
           messages={messages}
           setMessages={setMessages}
-          openCamera={true}
-          openDocumentPicker={true}
+          openCamera={openCamera}
+          openDocumentPicker={openDocumentPicker}
         />
       </View>
     </TouchableWithoutFeedback>

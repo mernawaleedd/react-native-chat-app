@@ -48,7 +48,7 @@ async function handleSubmit(values) {
         <Formik
           initialValues={{ emailOrUsername: '', password: '' }}
           validationSchema={validationSchema}
-          onSubmit={(values) => handleSubmit(values)} // Pass navigation to handleSubmit
+          onSubmit={(values) => handleSubmit(values)}
         >
           {({ values, handleChange, handleSubmit, errors, touched }) => (
             <View style={styles.form}>

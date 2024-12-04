@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import Datatable from "./DataTable";
 import { 
   View, 
   TextInput, 
@@ -8,23 +9,20 @@ import {
   Pressable, 
   Animated, 
   Clipboard, 
-  Alert 
+  Alert,
+  ActivityIndicator 
 } from "react-native";
-import { Audio } from "expo-av";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Markdown from 'react-native-markdown-display';
 import EventSource from 'react-native-event-source';
-import * as DocumentPicker from 'expo-document-picker'; // Import document picker
-import * as ImagePicker from 'expo-image-picker'; // Import image picker
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker'; 
 import styles from "../Styles";
 
-const ChatArea = ({ messages, setMessages }) => {
+const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker }) => {
   const [input, setInput] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // State for loader visibility
   const flatListRef = useRef();
-  const scaleAnim = useRef(new Animated.Value(1)).current; // For scaling animation
 
   const closeConnection = (eventSource) => {
     eventSource.close();
@@ -32,92 +30,114 @@ const ChatArea = ({ messages, setMessages }) => {
     setLoading(false);
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
+    if (input === "") return;
+
+    const userMessage = { id: Date.now().toString(), text: input, isUser: true };
+    
+    // Add user message to the list immediately
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setInput("");  // Clear input field
+    setLoading(true);
+
+    const botMessageId = Date.now().toString() + "2"; 
     let fullResponse = "";
-    if (input == "") {
-      return;
-    }
-    setInput(""); // Clear previous responses
-    const botMessageId = Date.now().toString() + 2;
-    setLoading(true); // Show loading state
+
     try {
+      let context = "";
+
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", {
+          uri: file.uri,
+          type: file.mimeType,
+          name: file.name,
+        });
+
+        const response = await fetch("http://192.168.1.242:8000/docs", {
+          method: "POST",
+          body: formData,
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        const result = await response.json();
+        context = result.english_translation;
+
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: Date.now().toString() + "4", text: `Extracted Text:\n\n ${result.context}`, isUser: false },
+          { id: Date.now().toString() + "5", text: `Translated Text:\n\n ${context}`, isUser: false },
+        ]);
+        setFile(false); 
+      }
+
+      // Add bot placeholder message after user message
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: Date.now().toString(), text: input, isUser: true },
-        { id: botMessageId, text: "", isUser: false }, // Add placeholder for bot response
+        { id: botMessageId, text: "Loading...", isUser: false },
       ]);
 
-      const url = `http://192.168.1.244:8000/stream`; // Adjust the URL if necessary
-
+      const url = `http://192.168.1.242:8000/stream`;  
       const eventSource = new EventSource(url, {
-        method: "POST", // Ensure you use POST if required
+        method: 'POST',
         body: JSON.stringify({
           question: input,
+          context: context,
         }),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
+
       eventSource.addEventListener("message", ({ data }) => {
         const msgObj = JSON.parse(data);
-        console.log(msgObj);
         fullResponse += msgObj;
 
-        // Check if the bot message already exists
         setMessages((prevMessages) => {
-          const existingBotMessage = prevMessages.find(
-            (message) => message.id === botMessageId
-          );
+          const existingBotMessage = prevMessages.find((message) => message.id === botMessageId);
 
           if (existingBotMessage) {
-            // Update the existing bot message
             return prevMessages.map((message) =>
               message.id === botMessageId
                 ? { ...message, text: (message.text || "") + msgObj }
                 : message
             );
           } else {
-            // Add a new bot message if it doesn't exist
             return [
               ...prevMessages,
               { id: botMessageId, text: msgObj, isUser: false },
             ];
           }
         });
+
         flatListRef.current?.scrollToEnd();
       });
 
-      // Return cleanup function
-      eventSource.addEventListener("end", () => {
-        console.log("Stream ended.");
-        closeConnection(eventSource); // Close the connection when the stream ends
+      eventSource.addEventListener('end', () => {
+        console.log('Stream ended.');
+        closeConnection(eventSource); 
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: Date.now().toString() + "3", text: "db role message", role: "db", isUser: false },
+        ]);
       });
+
     } catch (error) {
       console.error("Error:", error);
       setMessages((prevMessages) => {
-        const existingBotMessage = prevMessages.find(
-          (message) => message.id === botMessageId
-        );
-
-        if (existingBotMessage) {
-          // Update the existing bot message
-          return prevMessages.map((message) =>
-            message.id === botMessageId
-              ? {
-                  ...message,
-                  text: (message.text || "") + "An Error Occurred Try again",
-                }
-              : message
-          );
-        } else {
-          // Add a new bot message if it doesn't exist
-          return [
-            ...prevMessages,
-            { id: botMessageId, text: "An Error Occurred Try again", isUser: false },
-          ];
-        }
+        const existingBotMessage = prevMessages.find((message) => message.id === botMessageId);
+        return existingBotMessage
+          ? prevMessages.map((message) =>
+              message.id === botMessageId
+                ? { ...message, text: (message.text || "") + "An Error Occurred. Try again." }
+                : message
+            )
+          : [
+              ...prevMessages,
+              { id: botMessageId, text: "An Error Occurred. Try again.", isUser: false },
+            ];
       });
-      setLoading(false); // Hide loading state
+      setLoading(false);
     }
   };
 
@@ -126,70 +146,56 @@ const ChatArea = ({ messages, setMessages }) => {
     alert("Text copied to clipboard!");
   };
 
-  const openCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status === "granted") {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 1,
-      });
-
-      if (!result.cancelled) {
-        console.log("Camera result:", result);
-        // Handle the camera result here (e.g., send image, display it, etc.)
-      }
-    } else {
-      Alert.alert("Permission Denied", "You need to allow camera access.");
-    }
-  };
-
-  const openDocumentPicker = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", // Accept all file types
-      });
-
-      if (result.type === "success") {
-        console.log("Document result:", result);
-        // Handle document result here (e.g., send document, display it, etc.)
-      }
-    } catch (error) {
-      console.error("Error picking document:", error);
-    }
-  };
-
-  const renderMessage = ({ item }) => (
-    <View
-      style={[
-        styles.messageContainer,
-        item.isUser
-          ? { alignSelf: "flex-end", flexDirection: "row-reverse" }
-          : { alignSelf: "flex-start", flexDirection: "row" },
-      ]}
-    >
-      <View style={styles.iconContainer}>
+  const renderMessage = ({ item }) => {
+    return (
+      <View>
         {item.isUser ? (
-          <Ionicons name="person-circle-outline" size={24} color="#2579A7" />
+          <View
+            style={[styles.messageContainer, { alignSelf: "flex-end", flexDirection: "row-reverse"}]}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="person-circle-outline" size={24} color="#2579A7" />
+            </View>
+            <Text
+              style={[styles.messageText, { color: "#333" }]}
+            >
+              <Markdown style={{ body: { fontSize: 16, color: "#333" } }}>
+                {item.text}
+              </Markdown>
+            </Text>
+            <TouchableOpacity onPress={() => handleTextCopy(item.text)}>
+              <Ionicons name="copy" size={20} color="#2579A7" style={{ marginLeft: 10 }} />
+            </TouchableOpacity>
+          </View>
+        ) : item.text === "Loading..." ? (
+          <View style={[styles.messageContainer, { alignSelf: "flex-start", flexDirection: "row" }]}>
+            <MaterialIcons name="smart-toy" size={24} color="#2579A7" />
+            <ActivityIndicator size="small" color="#2579A7" />
+          </View>
+        ) : item.role === "db" ? (
+          <View>
+            <Datatable />
+          </View>
+        ) : item.role === "doc" ? (
+          <View style={styles.iconContainer}>
+            <Ionicons name="document-text" size={24} color="#2579A7" />
+          </View>
         ) : (
-          <MaterialIcons name="smart-toy" size={24} color="#2579A7" />
+          <View
+            style={[styles.messageContainer, { alignSelf: "flex-start", flexDirection: "row" }]}>
+            <MaterialIcons name="smart-toy" size={24} color="#2579A7" />
+            <Text style={[styles.messageText, { color: "#333" }]}>
+              <Markdown style={{ body: { fontSize: 16, color: "#333" } }}>
+                {item.text}
+              </Markdown>
+            </Text>
+            <TouchableOpacity onPress={() => handleTextCopy(item.text)}>
+              <Ionicons name="copy" size={20} color="#2579A7" style={{ marginLeft: 10 }} />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
-      <Text
-        style={[
-          styles.messageText,
-          item.isUser && styles.userMessageText,
-          !item.isUser && { color: "black" },
-        ]}
-      >
-        <Markdown style={markdownStyles}>{item.text}</Markdown>
-      </Text>
-      <TouchableOpacity onPress={() => handleTextCopy(item.text)}>
-        <Ionicons name="copy" size={20} color="#2579A7" style={{ marginLeft: 10 }} />
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.chatArea}>
@@ -199,19 +205,21 @@ const ChatArea = ({ messages, setMessages }) => {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.chatContainer}
         ref={flatListRef}
-        onContentSizeChange={() =>
-          flatListRef.current?.scrollToEnd({ animated: true })
-        }
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
+      
+      {loading && (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#2579A7" />
+        </View>
+      )}
+
       <View style={styles.inputContainer}>
         <View style={styles.inputWithMic}>
           <TouchableOpacity onPress={openCamera} style={styles.iconContainer}>
             <MaterialIcons name="photo-camera" size={24} color="#2579A7" />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={openDocumentPicker}
-            style={styles.iconContainer}
-          >
+          <TouchableOpacity onPress={openDocumentPicker} style={styles.iconContainer}>
             <MaterialIcons name="attach-file" size={24} color="#2579A7" />
           </TouchableOpacity>
 
@@ -228,16 +236,8 @@ const ChatArea = ({ messages, setMessages }) => {
 
         <Pressable
           onPress={sendMessage}
-          style={({ pressed }) => [
-            styles.sendButton,
-            pressed && { opacity: 0.8 },
-          ]}
-        >
-          <Ionicons
-            name={input.trim() ? "send" : "mic-outline"}
-            size={20}
-            color="#fff"
-          />
+          style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}>
+          <Ionicons name={input.trim() ? "send" : "mic-outline"} size={20} color="#fff" />
         </Pressable>
       </View>
     </View>
@@ -245,17 +245,3 @@ const ChatArea = ({ messages, setMessages }) => {
 };
 
 export default ChatArea;
-
-const markdownStyles = {
-  body: {
-    fontSize: 16,
-    color: "#333",
-  },
-  heading1: {
-    fontSize: 24,
-    fontWeight: "bold",
-  },
-  link: {
-    color: "#1e90ff",
-  },
-};
