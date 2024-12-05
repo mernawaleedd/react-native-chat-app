@@ -18,12 +18,15 @@ import EventSource from 'react-native-event-source';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker'; 
 import styles from "../Styles";
-
+import { Audio } from 'expo-av';
 const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker }) => {
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false); // State for loader visibility
+  const [loading, setLoading] = useState(false);
   const flatListRef = useRef();
-
+  const [recording, setRecording] = useState(null);
+  const [isRecording, setIsRecording] = useState(false); 
+  const [audioUri, setAudioUri] = useState("");
+  
   const closeConnection = (eventSource) => {
     eventSource.close();
     console.log("Connection closed.");
@@ -32,12 +35,9 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
 
   const sendMessage = async () => {
     if (input === "") return;
-
     const userMessage = { id: Date.now().toString(), text: input, isUser: true };
-    
-    // Add user message to the list immediately
     setMessages((prevMessages) => [...prevMessages, userMessage]);
-    setInput("");  // Clear input field
+    setInput(""); 
     setLoading(true);
 
     const botMessageId = Date.now().toString() + "2"; 
@@ -71,7 +71,6 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         setFile(false); 
       }
 
-      // Add bot placeholder message after user message
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: botMessageId, text: "Loading...", isUser: false },
@@ -196,7 +195,38 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       </View>
     );
   };
-
+  const startRecording = async () => {
+    try {
+      const { status } = await Audio.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission to access microphone is required!');
+        return;
+      }
+  
+      const recordingInstance = new Audio.Recording();
+      await recordingInstance.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await recordingInstance.startAsync();
+  
+      setRecording(recordingInstance);
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+  
+  const stopRecording = async () => {
+    try {
+      if (recording) {
+        await recording.stopAndUnloadAsync();
+        setAudioUri(recording.getURI());
+        setRecording(null);
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+  
   return (
     <View style={styles.chatArea}>
       <FlatList
@@ -235,10 +265,20 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         </View>
 
         <Pressable
-          onPress={sendMessage}
-          style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}>
-          <Ionicons name={input.trim() ? "send" : "mic-outline"} size={20} color="#fff" />
-        </Pressable>
+  onLongPress={startRecording}
+  onPressOut={stopRecording}  
+  onPress={input.trim() ? sendMessage : null} 
+  style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}
+>
+  <Ionicons
+    name={isRecording ? "stop-circle" : (input.trim() ? "send" : "mic-outline")}
+    size={20}
+    color="#fff"
+  />
+</Pressable>
+
+
+
       </View>
     </View>
   );

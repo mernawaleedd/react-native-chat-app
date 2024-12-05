@@ -7,39 +7,35 @@ import { Formik } from 'formik';
 import { useRouter } from "expo-router";
 import LoginImage from '../assets/images/LoginImage.png';
 import styles from './Styles';
-
-
 const MedLogin = () => {
-  const router=useRouter()
-  // Validation Schema with Regex for Email
-const validationSchema = Yup.object({
-  emailOrUsername: Yup.string()
-    .matches(
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-      'Invalid email address'
-    )
-    .required('Email is required'),
-  password: Yup.string().required('Password is required'),
-});
+  const router = useRouter()
+  const validationSchema = Yup.object({
+    emailOrUsername: Yup.string()
+      .matches(
+        /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+        'Invalid email address'
+      )
+      .required('Email is required'),
+    password: Yup.string().required('Password is required'),
+  });
+  // Submit Handler
+  async function handleSubmit(values) {
+    const { emailOrUsername, password } = values;
+    const response = {
+      url: "http://192.168.1.242:5000/api/auth/signin",
+      method: "POST",
+      data: { emailOrUsername, password },
+    };
 
-// Submit Handler
-async function handleSubmit(values) { 
-  const { emailOrUsername, password } = values;
-  const response = {
-    url: "http://192.168.1.242:5000/api/auth/signin",
-    method: "POST",
-    data: { emailOrUsername, password },
-  };
-  
-  try {
-    console.log(emailOrUsername, password);
-    const req = await axios.request(response);
-    console.log("data", req.data);
-    router.replace('DropdownsPage');
-  } catch (error) {
-    console.error("Login failed:", error);
+    try {
+      console.log(emailOrUsername, password);
+      const req = await axios.request(response);
+      console.log("data", req.data);
+      router.replace('DropdownsPage');
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   }
-}
   return (
     <View style={styles.Formcontainer}>
       {/* Right Section: Form */}
