@@ -26,6 +26,12 @@ export default function ChatPage() {
       quality: 1,
     });
 
+    setFile({"uri":result.assets[0].uri, "mimeType":result.assets[0].mimeType, "name":result.assets[0].fileName})
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: Date.now().toString(), text: result.assets[0].fileName, isUser: true },
+    ]);
+
     if (!result.canceled) {
       console.log("Image URI:", result.assets[0].uri);
     }
@@ -71,6 +77,8 @@ export default function ChatPage() {
           setMessages={setMessages}
           openCamera={openCamera}
           openDocumentPicker={openDocumentPicker}
+          file = {file}
+          setFile={setFile}
         />
       </View>
     </TouchableWithoutFeedback>

@@ -1,7 +1,9 @@
 import React from 'react';
+import GlobalProvider from "../context/GlobalProvider";
 import { SplashScreen, Stack } from "expo-router";
 
 export default function Layout() {
+
 	return (
 		// the global provider is the context provider for the app provide user data  look at the context folder
 		<GlobalProvider>
