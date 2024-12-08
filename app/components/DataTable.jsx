@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Animated } from 'react-native';
 import { DataTable, TextInput, IconButton } from 'react-native-paper';
 
-const TableData = () => {
-  const rows = [
-    { id: 1, col1: 12251, col2: 11222, col3: 41522, col4: 16255, col5: 11221 },
-
-  ];
+const TableData = ({rows}) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRows, setFilteredRows] = useState(rows);
