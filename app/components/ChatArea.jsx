@@ -16,9 +16,15 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import Markdown from 'react-native-markdown-display';
 import EventSource from 'react-native-event-source';
 import styles from "../Styles";
+import { Audio } from 'expo-av';
+
+import {transcripeUrl, streamBaseUrl} from "../../config"
 
 const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker }) => {
   const [input, setInput] = useState("");
+  const [recording, setRecording] = useState(null);
+  const [isRecording, setIsRecording] = useState(false); 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const [loading, setLoading] = useState(false); // State for loader visibility
   const flatListRef = useRef();
 
@@ -27,6 +33,30 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     console.log("Connection closed.");
     setLoading(false);
   };
+
+  async function transcripeAudio(uri) {
+    // Prepare FormData
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri,
+      name: 'recording.m4a', // Change the name and extension based on your file
+      type: 'audio/m4a', // MIME type of the file
+    });
+  
+    try {
+      // Upload audio
+      const response = await fetch(`${transcripeUrl}/transcribe`, {
+        method: "POST",
+        body: formData,
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const result = await response.json();
+      setInput(result.transcription)
+      console.log('Server response:', result.transcription);
+    } catch (error) {
+      console.log('Error uploading audio:', error);
+    }
+  }
 
   const sendMessage = async () => {
     if (input === "") return;
@@ -52,7 +82,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           name: file.name,
         });
 
-        const response = await fetch("http://192.168.1.242:8000/docs", {
+        const response = await fetch(`${streamBaseUrl}/docs`, {
           method: "POST",
           body: formData,
           headers: { "Content-Type": "multipart/form-data" },
@@ -76,7 +106,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         { id: botMessageId, text: "", isUser: false },
       ]);
 
-      const url = `http://192.168.1.242:8000/stream`;  
+      const url = `${streamBaseUrl}/stream`;  
       const eventSource = new EventSource(url, {
         method: 'POST',
         body: JSON.stringify({
@@ -143,6 +173,76 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
   const handleTextCopy = (text) => {
     Clipboard.setString(text);
     alert("Text copied to clipboard!");
+  };
+
+  const startRecording = async () => {
+    try {
+      if (input){
+        return
+      }
+      if (recording) {
+        await recording.stopAndUnloadAsync();
+        transcripeAudio(recording.getURI());
+        console.log(recording, "from start")
+        setRecording(null);
+        setIsRecording(false);
+      }else{
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission to access microphone is required!');
+          return;
+        }
+        
+        const recordingInstance = new Audio.Recording();
+        await recordingInstance.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        await recordingInstance.startAsync();
+    
+        setRecording(recordingInstance);
+        setIsRecording(true);
+        console.log(recordingInstance)
+      }
+    } catch (error) {
+      console.error('Error starting recording:', error);
+    }
+  };
+  
+  const stopRecording = async () => {
+    try {
+      if (recording) {
+        await recording.stopAndUnloadAsync();
+        transcripeAudio(recording.getURI());
+        console.log(recording, "from stop")
+        setRecording(null);
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.log('Error stopping recording:', error);
+    }
+  };
+
+  const handleMicPressIn = () => {
+    if (!input == ""){
+      return
+    }
+    Animated.spring(scaleAnim, {
+      toValue: 1.2, // Scale up the button
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleMicPressOut = async () => {
+    if (!input == ""){
+      return
+    }
+
+    Animated.spring(scaleAnim, {
+      toValue: 1, // Scale back to original size
+      useNativeDriver: true,
+    }).start();
+
+    if (isRecording) {
+      await stopRecording();
+    }
   };
 
   const rows = [
@@ -239,9 +339,37 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         </View>
 
         <Pressable
+          onPressIn={() => {
+            if(loading){
+              return
+            }else{
+              handleMicPressIn();
+              startRecording();
+            }
+          }}
+          
+          onPressOut={handleMicPressOut}
           onPress={sendMessage}
-          style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}>
-          <Ionicons name={input.trim() ? "send" : "mic-outline"} size={20} color="#fff" />
+          disabled={loading}
+          style={({ pressed }) => [
+            styles.sendButton,
+            pressed && { opacity: 0.8, scale: 1.5 },
+            isRecording && {
+              shadowColor: "#ffffff",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.5,
+              shadowRadius: 5,
+              elevation: 6,
+            },
+          ]}
+        >
+          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <Ionicons
+              name={input.trim() ? "send" : isRecording ? "mic" : "mic-outline"}
+              size={20}
+              color={input.trim() ? "#fff" : isRecording ? "#C6E7FF" : "#fff"}
+            />
+          </Animated.View>
         </Pressable>
       </View>
     </View>

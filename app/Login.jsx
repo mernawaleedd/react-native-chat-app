@@ -1,16 +1,20 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image,ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as Yup from 'yup';
-import axios from 'axios';
 import { Formik } from 'formik';
 import { useRouter } from "expo-router";
 import LoginImage from '../assets/images/LoginImage.png';
 import styles from './Styles';
+import { login } from '../api';
+import { useGlobalContext } from '../context/GlobalProvider';
+import { baseUrl } from '../config';
 
 
 const MedLogin = () => {
-  const router=useRouter()
+  const { setUser, setIsLogged, isLogged, user } = useGlobalContext();
+  const [isSubmitting, setSubmitting] = useState(false);
+  const router= useRouter()
   // Validation Schema with Regex for Email
 const validationSchema = Yup.object({
   emailOrUsername: Yup.string()
@@ -26,20 +30,49 @@ const validationSchema = Yup.object({
 async function handleSubmit(values) { 
   const { emailOrUsername, password } = values;
   const response = {
-    url: "http://192.168.1.242:5000/api/auth/signin",
+    url: `${baseUrl}/auth/sigin-company`,
     method: "POST",
-    data: { emailOrUsername, password },
+    data: { "Email":emailOrUsername, "Password": password },
   };
   
   try {
     console.log(emailOrUsername, password);
-    const req = await axios.request(response);
-    console.log("data", req.data);
+    const user = await login(response)
+    console.log(user)
+    const {
+      ApiKeyID,
+      CompanyID,
+      Email,
+      UserName} = user
+
+    console.log({
+      ApiKeyID,
+      CompanyID,
+      Email,
+      UserName
+    })
+
+    setUser({
+      ApiKeyID,
+      UserName,
+      Email,
+      CompanyID
+    });
+
+    setIsLogged(true);
+    setSubmitting(false);
     router.replace('DropdownsPage');
+
   } catch (error) {
-    console.error("Login failed:", error);
+    setSubmitting(false);
   }
 }
+useEffect(() => {
+  if (isLogged && user) {
+    router.replace("DropdownsPage");
+  }
+}, [isLogged, user, router]);
+
   return (
     <View style={styles.Formcontainer}>
       {/* Right Section: Form */}
@@ -50,7 +83,7 @@ async function handleSubmit(values) {
           validationSchema={validationSchema}
           onSubmit={(values) => handleSubmit(values)}
         >
-          {({ values, handleChange, handleSubmit, errors, touched }) => (
+          {({values,  handleChange, handleSubmit, errors, touched }) => (
             <View style={styles.form}>
               <Text style={styles.formTitle}>Form Login</Text>
 
@@ -91,8 +124,16 @@ async function handleSubmit(values) {
               )}
 
               {/* Submit Button */}
-              <TouchableOpacity onPress={handleSubmit} style={styles.button}>
+              <TouchableOpacity onPress={handleSubmit} style={styles.button} disabled={isSubmitting}>
                 <Text style={styles.buttonText}>Login</Text>
+                {isSubmitting && (
+                <ActivityIndicator
+                  animating={isSubmitting}
+                  color="#fff"
+                  size="small"
+                  className="ml-2"
+                />
+              )}
               </TouchableOpacity>
             </View>
           )}

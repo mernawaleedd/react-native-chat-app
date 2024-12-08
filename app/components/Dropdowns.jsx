@@ -6,37 +6,26 @@ import { useRouter } from "expo-router";
 const Dropdowns = () => {
   const [open1, setOpen1] = useState(false);
   const [value1, setValue1] = useState(null);
-  const [items1, setItems1] = useState([
-    { label: "القطاع التجاري", value: "القطاع التجاري" },
-    { label: "القطاع الصناعي", value: "القطاع الصناعي" },
-    { label: "القطاع الزراعي", value: "القطاع الزراعي" },
-  ]);
+  const [items1, setItems1] = useState([]);
 
   const [open2, setOpen2] = useState(false);
   const [value2, setValue2] = useState(null);
-  const [items2, setItems2] = useState([
-    { label: "الكل", value: "all" },
-    { label: "إدارة التسويق", value: "marketing" },
-    { label: "إدارة المبيعات", value: "sales" },
-  ]);
+  const [items2, setItems2] = useState([]);
 
   const [open3, setOpen3] = useState(false);
   const [value3, setValue3] = useState(null);
-  const [items3, setItems3] = useState([
-    { label: "التحدث مع قواعد البيانات", value: "database" },
-    { label: "التحدث مع الشبكات", value: "networking" },
-    { label: "التحدث مع التطبيقات", value: "applications" },
-  ]);
+  const [items3, setItems3] = useState([]);
 
   const [open4, setOpen4] = useState(false);
   const [value4, setValue4] = useState(null);
-  const [items4, setItems4] = useState([
-    { label: "جدول الفواتير", value: "invoices" },
-    { label: "جدول العملاء", value: "customers" },
-    { label: "جدول المنتجات", value: "products" },
-  ]);
+  const [items4, setItems4] = useState([]);
+  // { label: "التحدث مع قواعد البيانات", value: 2 },
+  // { label: "التحدث مع الملفات", value: 1 },
   const [error, setError] = useState("");
   const router = useRouter();
+  const handleChangeValue1 = () => {
+
+  }
  const submitForm=()=>{
     if (!value1 || !value2 || !value3 || !value4) {
       setError("Please Select Item");
@@ -58,6 +47,7 @@ const Dropdowns = () => {
           placeholder="اختر القطاع"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
+          onChangeValue={handleChangeValue1}
         />
       </View>
 
