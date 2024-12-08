@@ -4,6 +4,7 @@ import ChatPage from "./ChatPage";
 export default function App() {
 
   return (
-    <Login/>
+    // <Login/>
+    <ChatPage/>
   );
 }

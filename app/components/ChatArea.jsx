@@ -237,13 +237,9 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         ref={flatListRef}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
+  
+      {/* Removed the separate loader */}
       
-      {loading && (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2579A7" />
-        </View>
-      )}
-
       <View style={styles.inputContainer}>
         <View style={styles.inputWithMic}>
           <TouchableOpacity onPress={openCamera} style={styles.iconContainer}>
@@ -252,36 +248,37 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           <TouchableOpacity onPress={openDocumentPicker} style={styles.iconContainer}>
             <MaterialIcons name="attach-file" size={24} color="#2579A7" />
           </TouchableOpacity>
-
+  
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { textAlignVertical: "center", paddingVertical: 8 } // Center the text and placeholder
+            ]}
             placeholder="Type a message..."
+            placeholderTextColor="#aaa" // Adjust color if necessary
             value={input}
             onChangeText={setInput}
             multiline={true}
             numberOfLines={4}
-            textAlignVertical="top"
           />
         </View>
-
+  
         <Pressable
-  onLongPress={startRecording}
-  onPressOut={stopRecording}  
-  onPress={input.trim() ? sendMessage : null} 
-  style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}
->
-  <Ionicons
-    name={isRecording ? "stop-circle" : (input.trim() ? "send" : "mic-outline")}
-    size={20}
-    color="#fff"
-  />
-</Pressable>
-
-
-
+          onLongPress={startRecording}
+          onPressOut={stopRecording}  
+          onPress={input.trim() ? sendMessage : null} 
+          style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.8 }]}
+        >
+          <Ionicons
+            name={isRecording ? "stop-circle" : (input.trim() ? "send" : "mic-outline")}
+            size={20}
+            color="#fff"
+          />
+        </Pressable>
       </View>
     </View>
   );
+  
 };
 
 export default ChatArea;

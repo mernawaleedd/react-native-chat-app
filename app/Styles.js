@@ -166,18 +166,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconContainer: {
-    padding: 12,
+    padding: 5,
   },
   input: {
     flex: 1,
     height: 48,
     paddingHorizontal: 12,
+    alignItems:"center",
     color: '#333',
   },
   button: {
     backgroundColor: '#2579A7',
     paddingVertical: 12,
-    alignItems: 'center',
+    textAlign: 'center',
     borderRadius: 8,
   },
   buttonText: {
