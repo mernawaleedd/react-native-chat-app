@@ -3,7 +3,6 @@ import { View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import styles from "../Styles";
-
 const Navbar = ({ onOpenSidebar, showChatIcon = true, onClearChat }) => {
   const navigation = useNavigation();
   const [isOnDropdownPage, setIsOnDropdownPage] = useState(false);
