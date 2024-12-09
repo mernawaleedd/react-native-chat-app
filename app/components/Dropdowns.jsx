@@ -27,11 +27,8 @@ const Dropdowns = () => {
 
   }
  const submitForm=()=>{
-    if (!value1 || !value2 || !value3 || !value4) {
-      setError("Please Select Item");
-    } else {
       router.replace('ChatPage');
- }
+
 }
   return (
     <View style={styles.container}>
