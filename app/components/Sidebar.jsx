@@ -3,14 +3,24 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native"; 
 import styles from "../Styles";
+import { logOut } from "../../api";
+import { useRouter } from "expo-router";
+
+import { useGlobalContext } from "../../context/GlobalProvider";
 
 const Sidebar = ({ isVisible, onClose }) => {
-  const navigation = useNavigation(); 
+
+  const router = useRouter()
+  const {setUser,setIsLogged}=useGlobalContext()
 
   // Function to handle logout
   const handleLogout = () => {
     onClose();
-    navigation.navigate("Login");
+    setIsLogged(false)
+    setUser(null)
+    const logot =async ()=> await logOut()
+    logot()
+    router.replace("/");
   };
 
   return (

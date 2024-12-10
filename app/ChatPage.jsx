@@ -6,11 +6,14 @@ import { TouchableWithoutFeedback, Keyboard, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
+import { useLocalSearchParams } from 'expo-router';
+import GlobalProvider from "../context/GlobalProvider";
 
 export default function ChatPage() {
   const [file, setFile] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [messages, setMessages] = useState([]);
+  const {id, ItemType} = useLocalSearchParams()
   const router = useRouter();
 
   const openCamera = async () => {
@@ -60,6 +63,7 @@ export default function ChatPage() {
   };
 
   return (
+    <GlobalProvider>
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
       <View style={{ flex: 1 }}>
         <Navbar
@@ -79,8 +83,11 @@ export default function ChatPage() {
           openDocumentPicker={openDocumentPicker}
           file = {file}
           setFile={setFile}
+          id={id}
+          ItemType={ItemType}
         />
       </View>
     </TouchableWithoutFeedback>
+    </GlobalProvider>
   );
 }

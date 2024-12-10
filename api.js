@@ -4,8 +4,8 @@ import * as SecureStore from "expo-secure-store";
 // Define your API base URL
 // const API_BASE_URL = "http://192.168.1.24:5000/api";
 
-const API_BASE_URL = "http://192.168.1.29:6587/api";
-// const API_BASE_URL = "http://196.219.138.210:6587/api";
+// const API_BASE_URL = "http://192.168.1.29:6587/api";
+const API_BASE_URL = "http://196.219.138.210:6587/api";
 
 // Create an Axios instance
 const api = axios.create({
@@ -16,9 +16,11 @@ const api = axios.create({
 api.interceptors.request.use(
 	async (config) => {
 		try {
-			const AccessToken = await SecureStore.getItemAsync("AccessToken");
+			const AccessToken = JSON.parse(await SecureStore.getItemAsync("AccessToken"));
+			console.log(AccessToken)
 			if (AccessToken) {
 				config.headers.Authorization = `Bearer ${AccessToken}`;
+				console.log(config.headers.Authorization)
 			}
 		} catch (error) {
 			console.error("Error getting access token:", error);
@@ -29,38 +31,38 @@ api.interceptors.request.use(
 );
 
 // Add a response interceptor to handle token refresh
-api.interceptors.response.use(
-	(response) => response,
-	async (error) => {
-		const originalRequest = error.config;
-		console.log(error);
-		if (error.response.status === 401 && !originalRequest._retry) {
-			originalRequest._retry = true;
-			try {
-				// Get the refresh token from SecureStore
-				const refreshToken = await SecureStore.getItemAsync("refreshToken");
+// api.interceptors.response.use(
+// 	(response) => response,
+// 	async (error) => {
+// 		const originalRequest = error.config;
+// 		console.log(error);
+// 		if (error.response.status === 401 && !originalRequest._retry) {
+// 			originalRequest._retry = true;
+// 			try {
+// 				// Get the refresh token from SecureStore
+// 				// const refreshToken = await SecureStore.getItemAsync("refreshToken");
 
-				// Request a new access token using the refresh token
-				const response = await axios.post(`${API_BASE_URL}/auth/token`, {
-					refreshToken,
-				});
+// 				// Request a new access token using the refresh token
+// 				const response = await axios.post(`${API_BASE_URL}/auth/token`, {
+// 					refreshToken,
+// 				});
 
-				const { accessToken } = response.data;
+// 				const { accessToken } = response.data;
 
-				// Save the new access token to SecureStore
-				await SecureStore.setItemAsync("accessToken", accessToken);
+// 				// Save the new access token to SecureStore
+// 				await SecureStore.setItemAsync("accessToken", accessToken);
 
-				// Update the authorization header and retry the original request
-				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-				return api(originalRequest);
-			} catch (error) {
-				await logOut()
-				console.error("Error refreshing access token:", error);
-			}
-		}
-		return Promise.reject(error);
-	}
-);
+// 				// Update the authorization header and retry the original request
+// 				originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+// 				return api(originalRequest);
+// 			} catch (error) {
+// 				await logOut()
+// 				console.error("Error refreshing access token:", error);
+// 			}
+// 		}
+// 		return Promise.reject(error);
+// 	}
+// );
 
 const saveTokens = async (
 	user
@@ -69,7 +71,7 @@ const saveTokens = async (
 		user
 	)
 	await SecureStore.setItemAsync("AccessToken", JSON.stringify(user.AccessToken));
-	await SecureStore.setItemAsync("ApiKeyID", JSON.stringify(user.ApiKeyID));
+	await SecureStore.setItemAsync("ApiKeyID", JSON.stringify(user.ApiKeyID.ApiKey));
 	await SecureStore.setItemAsync("CompanyID", JSON.stringify(user.CompanyID));
 	await SecureStore.setItemAsync("Email", JSON.stringify(user.Email));
 	await SecureStore.setItemAsync("UserName", JSON.stringify(user.Username));
@@ -89,7 +91,7 @@ export const login = async (response) => {
 			);
 			return {
 				AccessToken,
-				ApiKeyID,
+				ApiKeyID:user.ApiKeyID.ApiKey,
 				CompanyID,
 				Email,
 				UserName: user.Username
