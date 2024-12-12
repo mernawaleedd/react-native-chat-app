@@ -72,7 +72,6 @@ useEffect(() => {
     router.replace("DropdownsPage");
   }
 }, [isLogged, user, router]);
-
   return (
     <View style={styles.Formcontainer}>
       {/* Right Section: Form */}

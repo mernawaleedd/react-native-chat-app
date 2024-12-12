@@ -17,7 +17,6 @@ import Markdown from 'react-native-markdown-display';
 import EventSource from 'react-native-event-source';
 import styles from "../Styles";
 import { Audio } from 'expo-av';
-
 import {transcripeUrl, streamBaseUrl, sqlUrl} from "../../config"
 import api from "../../api";
 
@@ -34,6 +33,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
   let type = "doc"
   const flatListRef = useRef();
   const { user } = useGlobalContext();
+
   const closeConnection = (eventSource) => {
     eventSource.close();
     console.log("Connection closed.");
@@ -66,12 +66,9 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
 
   const sendMessage = async () => {
     if (input === "") return;
-
     const userMessage = { id: Date.now().toString(), text: input, isUser: true };
-    
-    // Add user message to the list immediately
     setMessages((prevMessages) => [...prevMessages, userMessage]);
-    setInput("");  // Clear input field
+    setInput(""); 
     setLoading(true);
 
     const botMessageId = Date.now().toString() + "2"; 
@@ -261,27 +258,13 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       console.error('Error starting recording:', error);
     }
   };
-  
-  const stopRecording = async () => {
-    try {
-      if (recording) {
-        await recording.stopAndUnloadAsync();
-        transcripeAudio(recording.getURI());
-        console.log(recording, "from stop")
-        setRecording(null);
-        setIsRecording(false);
-      }
-    } catch (error) {
-      console.log('Error stopping recording:', error);
-    }
-  };
 
   const handleMicPressIn = () => {
     if (!input == ""){
       return
     }
     Animated.spring(scaleAnim, {
-      toValue: 1.2, // Scale up the button
+      toValue: 1.2,
       useNativeDriver: true,
     }).start();
   };
@@ -292,7 +275,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     // }
 
     Animated.spring(scaleAnim, {
-      toValue: 1, // Scale back to original size
+      toValue: 1,
       useNativeDriver: true,
     }).start();
 
@@ -324,14 +307,21 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       <View>
         {item.isUser ? (
           <View
-            style={[styles.messageContainer, { alignSelf: "flex-end", flexDirection: "row-reverse"}]}>
+            style={[
+              styles.messageContainer,
+              { alignSelf: "flex-end", flexDirection: "row-reverse" }
+            ]}
+          >
             <View style={styles.iconContainer}>
               <Ionicons name="person-circle-outline" size={24} color="#2579A7" />
             </View>
             <Text
-              style={[styles.messageText, { color: "#333" }]}
+              style={[
+                styles.messageText,
+                { color: "#FFFFFF",backgroundColor:"#2579A7" } 
+              ]}
             >
-              <Markdown style={{ body: { fontSize: 16, color: "#333" } }}>
+              <Markdown style={{ body: { fontSize: 16, color: "#FFFFFF" } }}>
                 {item.text}
               </Markdown>
             </Text>
@@ -354,10 +344,19 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           </View>
         ) : (
           <View
-            style={[styles.messageContainer, { alignSelf: "flex-start", flexDirection: "row" }]}>
+            style={[
+              styles.messageContainer,
+              { alignSelf: "flex-start", flexDirection: "row" }
+            ]}
+          >
             <MaterialIcons name="smart-toy" size={24} color="#2579A7" />
-            <Text style={[styles.messageText, { color: "#333" }]}>
-              <Markdown style={{ body: { fontSize: 16, color: "#333" } }}>
+            <Text
+              style={[
+                styles.messageText,
+                { color: "#FFFFFF" } // White color for bot message text
+              ]}
+            >
+              <Markdown style={{ body: { fontSize: 16, color: "#FFFFFF" } }}>
                 {item.text}
               </Markdown>
             </Text>
@@ -369,7 +368,22 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       </View>
     );
   };
-
+  
+  
+  
+  const stopRecording = async () => {
+    try {
+      if (recording) {
+        await recording.stopAndUnloadAsync();
+        setAudioUri(recording.getURI());
+        setRecording(null);
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
+  
   return (
     <View style={styles.chatArea}>
       <FlatList
@@ -379,14 +393,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         contentContainerStyle={styles.chatContainer}
         ref={flatListRef}
         onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
-      
-      {loading && (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#2579A7" />
-        </View>
-      )}
-
+      />    
       <View style={styles.inputContainer}>
         <View style={styles.inputWithMic}>
           <TouchableOpacity onPress={openCamera} style={styles.iconContainer}>
@@ -395,18 +402,21 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           <TouchableOpacity onPress={openDocumentPicker} style={styles.iconContainer}>
             <MaterialIcons name="attach-file" size={24} color="#2579A7" />
           </TouchableOpacity>
-
+  
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              { textAlignVertical: "center", paddingVertical: 8 }
+            ]}
             placeholder="Type a message..."
+            placeholderTextColor="#aaa" 
             value={input}
             onChangeText={setInput}
             multiline={true}
             numberOfLines={4}
-            textAlignVertical="top"
           />
         </View>
-
+  
         <Pressable
           onPressIn={() => {
             if(loading){
@@ -444,5 +454,4 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     </View>
   );
 };
-
 export default ChatArea;

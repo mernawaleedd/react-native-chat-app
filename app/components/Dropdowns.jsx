@@ -28,73 +28,12 @@ const Dropdowns = () => {
   const router = useRouter();
 
  const submitForm=()=>{
-    if (!value1 || !value2 || !value3 || !value4 ){
+    if (!value1 || !value2 || !value3 || !value4) {
       setError("Please Select Item");
     } else {
-      console.log(value5)
-      router.replace({pathname:"ChatPage", params:{
-        id:value5,
-        ItemType:value4
-      }});
+      router.replace('ChatPage');
  }
 }
-
-const handleChangeValue1 = async () => {
-  try {
-    if (value1 == null) {
-      return
-    }
-    const response = await api.get(`/list/department/child?ParentDepartmentID=${value1}`);
-    console.log(response);
-    setItems2(response.data.data);
-  } catch (error) {
-    console.log(error);
-  }
-}
-const handleChangeValue3 = async () => {
-  setItems4([{ label: "التحدث مع قواعد البيانات", value: 2 },
-    { label: "التحدث مع الملفات", value: 1 },])
-}
-
-const handleChangeValue4 = async () => {
-  try {
-    if (value1 == null) {
-      return
-    }
-    const response = await api.get(`/list/company/document?DepartmentID=${value3}&ItemType=${value4}`);
-    console.log(response.data.data);
-    setItems5(response.data.data);
-  } catch (error) {
-    console.log(error);
-  }
-}
-const handleChangeValue2 = async () => {
-  try {
-    if (value2 == null) {
-      return
-    }
-    const response = await api.get(`/list/department/child?ParentDepartmentID=${value2}`);
-    console.log(response.data.data);
-    setItems3(response.data.data);
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-useEffect(() => {
-  const setTheFirstCombo = async () => {
-    try {
-      const response = await api.get('/list/company/department');
-      setItems1(response.data.data);
-      console.log(response);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  setTheFirstCombo();
-}, []);
-
   return (
     <View style={styles.container}>
       <View style={[styles.dropdownContainer, { zIndex: open1 ? 4 : 0 }]}>
