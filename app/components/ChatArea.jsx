@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Datatable from "./DataTable";
 import { 
   View, 
@@ -17,16 +17,23 @@ import Markdown from 'react-native-markdown-display';
 import EventSource from 'react-native-event-source';
 import styles from "../Styles";
 import { Audio } from 'expo-av';
-import {transcripeUrl, streamBaseUrl} from "../../config"
+import {transcripeUrl, streamBaseUrl, sqlUrl} from "../../config"
+import api from "../../api";
 
-const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker }) => {
+import { useGlobalContext } from "../../context/GlobalProvider";
+
+const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocumentPicker, id, ItemType }) => {
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(null);
   const [isRecording, setIsRecording] = useState(false); 
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [loading, setLoading] = useState(false); // State for loader visibility
+  const [data, setData] = useState(false)
+  const [sql, setSql] = useState(false)
+  let type = "doc"
   const flatListRef = useRef();
-  
+  const { user } = useGlobalContext();
+
   const closeConnection = (eventSource) => {
     eventSource.close();
     console.log("Connection closed.");
@@ -69,6 +76,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
 
     try {
       let context = "";
+      let context2=[]
 
       if (file) {
         const formData = new FormData();
@@ -86,6 +94,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
 
         const result = await response.json();
         context = result.context;
+        type = "doc"
         console.log(result)
 
         setMessages((prevMessages) => [
@@ -94,8 +103,59 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           // { id: Date.now().toString() + "5", text: `Translated Text:\n\n ${context}`, isUser: false },
         ]);
         setFile(false); 
+      } else if(data) {
+        if (ItemType == 1){
+          console.log(data)
+          const response = await fetch(`${streamBaseUrl}/docs-from-url`, {
+            method: "POST",
+            body: JSON.stringify({
+              "url": data.ItemSrc,
+            }),
+            headers: { "Content-Type": "application/json" },
+          });
+  
+          const result = await response.json();
+          context = result.context;
+          console.log(result)
+          type = "doc"
+        } else if(ItemType == 2){
+          console.log(sqlUrl)
+          console.log(data)
+          const response = await fetch(`${sqlUrl}`, {
+            method: "POST",
+            body: JSON.stringify({
+              "question": input,
+              "table_names":[`${data.ItemName}`],
+              "appName":"BILLS"
+            }),
+            headers: { "Content-Type": "application/json", "x-api-key":user.ApiKeyID },
+          });
+          // const responseText = await response.text(); // Read response as plain text
+          console.log("Raw response:", response);
+          
+            const result = await response.json();
+            console.log(result)
+            setSql(result.sql)
+            const response2 = await fetch(`${transcripeUrl}/query?q=${encodeURIComponent(result.sql)}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json"},
+            });
+            // const responseText = await response.text(); // Read response as plain text
+            console.log("Raw response:", response2);
+              const result2 = await response2.json();
+              context2 = JSON.parse(result2.results)
+              console.log(context2)
+              type = "db"
+              setMessages((prevMessages) => [
+                ...prevMessages,
+                { id: Date.now().toString() + "3", rows: context2, role: "db", isUser: false },
+              ]);
+            
+          // context = result;
+          // console.log(result)
+        }
       }
-
+      // Add bot placeholder message after user message
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: botMessageId, text: "", isUser: false },
@@ -107,6 +167,8 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         body: JSON.stringify({
           question: input,
           context: context,
+          reqType:type,
+          table:context2
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -140,10 +202,6 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       eventSource.addEventListener('end', () => {
         console.log('Stream ended.');
         closeConnection(eventSource); 
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { id: Date.now().toString() + "3", text: "db role message", role: "db", isUser: false },
-        ]);
       });
 
     } catch (error) {
@@ -212,9 +270,9 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
   };
 
   const handleMicPressOut = async () => {
-    if (!input == ""){
-      return
-    }
+    // if (!input == ""){
+    //   return
+    // }
 
     Animated.spring(scaleAnim, {
       toValue: 1,
@@ -227,9 +285,22 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
   };
 
   const rows = [
-    { id: 1, col1: 12251, col2: 11222, col3: 41522, col4: 16255, col5: 11221 },
-    {id: 2, col1:1111, col2: 1144, col3:7777, col4: 9999, col5:777888}
+    {"TotalBills": "261661531.27"}
   ];
+
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const response = await api.get(`/document/${id}`);
+        console.log(response.data.data);
+        setData(response.data.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    getData()
+  }, [])
+  
 
   const renderMessage = ({ item }) => {
     return (
@@ -257,6 +328,19 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
             <TouchableOpacity onPress={() => handleTextCopy(item.text)}>
               <Ionicons name="copy" size={20} color="#2579A7" style={{ marginLeft: 10 }} />
             </TouchableOpacity>
+          </View>
+        ) : item.text === "Loading..." ? (
+          <View style={[styles.messageContainer, { alignSelf: "flex-start", flexDirection: "row" }]}>
+            <MaterialIcons name="smart-toy" size={24} color="#2579A7" />
+            <ActivityIndicator size="small" color="#2579A7" />
+          </View>
+        ) : item.role === "db" ? (
+          <View>
+            <Datatable rows = {item.rows}/>
+          </View>
+        ) : item.role === "doc" ? (
+          <View style={styles.iconContainer}>
+            <Ionicons name="document-text" size={24} color="#2579A7" />
           </View>
         ) : (
           <View
@@ -360,9 +444,9 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
         >
           <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
             <Ionicons
-              name={input.trim() ? "send" : isRecording ? "mic" : "mic-outline"}
+              name={input ? "send" : isRecording ? "mic" : "mic-outline"}
               size={20}
-              color={input.trim() ? "#fff" : isRecording ? "#C6E7FF" : "#fff"}
+              color={input ? "#fff" : isRecording ? "#C6E7FF" : "#fff"}
             />
           </Animated.View>
         </Pressable>
