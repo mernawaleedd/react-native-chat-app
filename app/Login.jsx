@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image,ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -10,68 +10,73 @@ import { login } from '../api';
 import { useGlobalContext } from '../context/GlobalProvider';
 import { baseUrl } from '../config';
 
-
 const MedLogin = () => {
   const { setUser, setIsLogged, isLogged, user } = useGlobalContext();
   const [isSubmitting, setSubmitting] = useState(false);
-  const router= useRouter()
+  const router = useRouter();
+
   // Validation Schema with Regex for Email
-const validationSchema = Yup.object({
-  emailOrUsername: Yup.string()
-    .matches(
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-      'Invalid email address'
-    )
-    .required('Email is required'),
-  password: Yup.string().required('Password is required'),
-});
+  const validationSchema = Yup.object({
+    emailOrUsername: Yup.string()
+      .matches(
+        /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
+        'Invalid email address'
+      )
+      .required('Email is required'),
+    password: Yup.string().required('Password is required'),
+  });
 
-// Submit Handler
-async function handleSubmit(values) { 
-  const { emailOrUsername, password } = values;
-  const response = {
-    url: `${baseUrl}/auth/sigin-company`,
-    method: "POST",
-    data: { "Email":emailOrUsername, "Password": password },
-  };
-  
-  try {
-    console.log(emailOrUsername, password);
-    const user = await login(response)
-    console.log(user)
-    const {
-      ApiKeyID,
-      CompanyID,
-      Email,
-      UserName} = user
+  // Submit Handler
+  async function handleSubmit(values) {
+    const { emailOrUsername, password } = values;
+    const response = {
+      url: `${baseUrl}/auth/sigin-company`,
+      method: "POST",
+      data: { "Email": emailOrUsername, "Password": password },
+    };
 
-    console.log({
-      ApiKeyID,
-      CompanyID,
-      Email,
-      UserName
-    })
+    try {
+      setSubmitting(true);
+      console.log(emailOrUsername, password);
+      const user = await login(response);
+      console.log(user);
+      const {
+        ApiKeyID,
+        CompanyID,
+        Email,
+        UserName
+      } = user;
 
-    setUser({
-      ApiKeyID,
-      UserName,
-      Email,
-      CompanyID
-    });
+      console.log({
+        ApiKeyID,
+        CompanyID,
+        Email,
+        UserName
+      });
 
-    setIsLogged(true);
-    setSubmitting(false);
-    router.replace('DropdownsPage');
+      setUser({
+        ApiKeyID,
+        UserName,
+        Email,
+        CompanyID
+      });
 
-  } catch (error) {
-    setSubmitting(false);
+      setIsLogged(true);
+      setSubmitting(false);
+      router.replace('DropdownsPage');
+
+    } catch (error) {
+      console.error(error);
+      setSubmitting(false);
+    }
   }
-}
-useEffect(() => {
-  if (isLogged && user) {
-    router.replace("DropdownsPage");
-  }
-}, [isLogged, user, router]);
+
+  useEffect(() => {
+    if (isLogged && user) {
+      router.replace("DropdownsPage");
+    }
+  }, [isLogged, user, router]);
+
   return (
     <View style={styles.Formcontainer}>
       {/* Right Section: Form */}
@@ -82,7 +87,7 @@ useEffect(() => {
           validationSchema={validationSchema}
           onSubmit={(values) => handleSubmit(values)}
         >
-          {({values,  handleChange, handleSubmit, errors, touched }) => (
+          {({ values, handleChange, handleSubmit, errors, touched }) => (
             <View style={styles.form}>
               <Text style={styles.formTitle}>Form Login</Text>
 
@@ -123,16 +128,16 @@ useEffect(() => {
               )}
 
               {/* Submit Button */}
-              <TouchableOpacity onPress={handleSubmit} style={styles.button} disabled={isSubmitting}>
-                <Text style={styles.buttonText}>Login</Text>
-                {isSubmitting && (
-                <ActivityIndicator
-                  animating={isSubmitting}
-                  color="#fff"
-                  size="small"
-                  className="ml-2"
-                />
-              )}
+              <TouchableOpacity 
+                onPress={handleSubmit} 
+                style={[styles.button, isSubmitting && styles.buttonDisabled]} 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Login</Text>
+                )}
               </TouchableOpacity>
             </View>
           )}

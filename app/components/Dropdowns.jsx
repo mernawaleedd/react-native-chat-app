@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useRouter } from "expo-router";
 
@@ -19,19 +27,42 @@ const Dropdowns = () => {
   const [open4, setOpen4] = useState(false);
   const [value4, setValue4] = useState(null);
   const [items4, setItems4] = useState([]);
-  // { label: "التحدث مع قواعد البيانات", value: 2 },
-  // { label: "التحدث مع الملفات", value: 1 },
-  const [error, setError] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
-  const handleChangeValue1 = () => {
 
-  }
- const submitForm=()=>{
-      router.replace('ChatPage');
+  const submitForm = async () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.replace("ChatPage");
+    }, 2000);
+  };
 
-}
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      // Reset dropdown values and items or add any refresh logic here
+      setValue1(null);
+      setValue2(null);
+      setValue3(null);
+      setValue4(null);
+      setItems1([]);
+      setItems2([]);
+      setItems3([]);
+      setItems4([]);
+      setRefreshing(false);
+    }, 1500);
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
       <View style={[styles.dropdownContainer, { zIndex: open1 ? 4 : 0 }]}>
         <Text style={styles.label}>القطاع</Text>
         <DropDownPicker
@@ -44,7 +75,6 @@ const Dropdowns = () => {
           placeholder="اختر القطاع"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          onChangeValue={handleChangeValue1}
         />
       </View>
 
@@ -90,15 +120,21 @@ const Dropdowns = () => {
           placeholder="اختر البيان"
           style={styles.dropdown}
           dropDownContainerStyle={styles.dropdownBox}
-          onChangeValue={(e)=> console.log(e)} 
         />
       </View>
 
-      <TouchableOpacity style={styles.submitButton} onPress={submitForm}
+      <TouchableOpacity
+        style={[styles.submitButton, loading && styles.buttonDisabled]}
+        onPress={submitForm}
+        disabled={loading}
       >
-        <Text style={styles.submitButtonText}>دخول</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.submitButtonText}>دخول</Text>
+        )}
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -133,6 +169,9 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
 });
 

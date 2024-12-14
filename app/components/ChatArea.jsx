@@ -269,7 +269,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
             <Text
               style={[
                 styles.messageText,
-                { color: "#FFFFFF" } // White color for bot message text
+                { color: "#FFFFFF" }
               ]}
             >
               <Markdown style={{ body: { fontSize: 16, color: "#FFFFFF" } }}>
@@ -284,9 +284,6 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       </View>
     );
   };
-  
-  
-  
   const stopRecording = async () => {
     try {
       if (recording) {
@@ -318,7 +315,6 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
           <TouchableOpacity onPress={openDocumentPicker} style={styles.iconContainer}>
             <MaterialIcons name="attach-file" size={24} color="#2579A7" />
           </TouchableOpacity>
-  
           <TextInput
             style={[
               styles.input,
@@ -366,6 +362,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
             />
           </Animated.View>
         </Pressable>
+        
       </View>
     </View>
   );
