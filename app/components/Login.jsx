@@ -4,11 +4,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import * as Yup from 'yup';
 import { Formik } from 'formik';
 import { useRouter } from "expo-router";
-import LoginImage from '../assets/images/LoginImage.png';
-import styles from './Styles';
-import { login } from '../api';
-import { useGlobalContext } from '../context/GlobalProvider';
-import { baseUrl } from '../config';
+import LoginImage from '../../assets/images/LoginImage.png';
+import styles from '../Styles';
+import { login } from '../../api';
+import { useGlobalContext } from '../../context/GlobalProvider';
+import { baseUrl } from '../../config';
 
 const MedLogin = () => {
   const { setUser, setIsLogged, isLogged, user } = useGlobalContext();

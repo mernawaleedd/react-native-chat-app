@@ -9,19 +9,19 @@ const TableData = ({rows}) => {
   const [isSearchVisible, setSearchVisible] = useState(false);
   const [searchBarWidth] = useState(new Animated.Value(0));
 
-  useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredRows(rows);
-    } else {
-      setFilteredRows(
-        rows.filter((row) =>
-          Object.values(row).some((value) =>
-            value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        )
-      );
-    }
-  }, [searchQuery]);
+  // useEffect(() => {
+  //   if (searchQuery.trim() === '') {
+  //     setFilteredRows(rows);
+  //   } else {
+  //     setFilteredRows(
+  //       rows.filter((row) =>
+  //         Object.values(row).some((value) =>
+  //           value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+  //         )
+  //       )
+  //     );
+  //   }
+  // }, [searchQuery]);
 
   const toggleSearch = () => {
     if (!isSearchVisible) {
@@ -40,60 +40,31 @@ const TableData = ({rows}) => {
     }
   };
 
+  const columnNames = rows.length > 0 ? Object.keys(rows[0]) : [];
+
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        {isSearchVisible && (
-          <Animated.View style={[styles.searchContainer, { width: searchBarWidth }]}>
-            <TextInput
-              mode="outlined"
-              placeholder="Search"
-              value={searchQuery}
-              onChangeText={(query) => setSearchQuery(query)}
-              style={styles.searchInput}
-              right={
-                <TextInput.Icon
-                  icon="close"
-                  onPress={toggleSearch}
-                  iconColor="#2579A7"
-                />
-              }
-            />
-          </Animated.View>
-        )}
-        {!isSearchVisible && (
-          <IconButton
-            icon="magnify"
-            size={24}
-            onPress={toggleSearch}
-            style={styles.icon}
-            iconColor="#2579A7"
-          />
-        )}
-      </View> */}
-
-      {/* Table */}
       <View style={styles.tableContainer}>
         <ScrollView horizontal>
           <ScrollView>
             <DataTable style={styles.dataTable}>
+              {/* Dynamically generate the header */}
               <DataTable.Header>
-                <DataTable.Title style={styles.column}>ID</DataTable.Title>
-                <DataTable.Title style={styles.column}>Col1</DataTable.Title>
-                <DataTable.Title style={styles.column}>Col2</DataTable.Title>
-                <DataTable.Title style={styles.column}>Col3</DataTable.Title>
-                <DataTable.Title style={styles.column}>Col4</DataTable.Title>
-                <DataTable.Title style={styles.column}>Col5</DataTable.Title>
+                {columnNames.map((column, index) => (
+                  <DataTable.Title key={index} style={styles.column}>
+                    {column}
+                  </DataTable.Title>
+                ))}
               </DataTable.Header>
 
-              {filteredRows.map((row) => (
-                <DataTable.Row key={row.id}>
-                  <DataTable.Cell style={styles.column}>{row.id}</DataTable.Cell>
-                  <DataTable.Cell style={styles.column}>{row.col1}</DataTable.Cell>
-                  <DataTable.Cell style={styles.column}>{row.col2}</DataTable.Cell>
-                  <DataTable.Cell style={styles.column}>{row.col3}</DataTable.Cell>
-                  <DataTable.Cell style={styles.column}>{row.col4}</DataTable.Cell>
-                  <DataTable.Cell style={styles.column}>{row.col5}</DataTable.Cell>
+              {/* Dynamically generate the rows */}
+              {filteredRows.map((row, rowIndex) => (
+                <DataTable.Row key={rowIndex}>
+                  {Object.values(row).map((value, colIndex) => (
+                    <DataTable.Cell key={colIndex} style={styles.column}>
+                      {value}
+                    </DataTable.Cell>
+                  ))}
                 </DataTable.Row>
               ))}
             </DataTable>

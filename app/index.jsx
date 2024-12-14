@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import Login from "./Login";
+import Login from "./components/Login";
 import GlobalProvider from "../context/GlobalProvider";
 
-export default function App() {
+export default function Index() {
 
   return (
     <GlobalProvider>
