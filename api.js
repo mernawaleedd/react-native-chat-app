@@ -5,7 +5,7 @@ import axios from "axios"
 // const API_BASE_URL = "http://192.168.1.24:5000/api";
 
 // const API_BASE_URL = "http://192.168.1.29:6587/api";
-const API_BASE_URL = "http://196.219.138.210:6587/api";
+const API_BASE_URL = "https://apitms.isis-eg.com/api";
 
 // Create an Axios instance
 const api = axios.create({

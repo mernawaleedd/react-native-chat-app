@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import Login from "./components/Login";
 import GlobalProvider from "../context/GlobalProvider";
-
 export default function Index() {
-
   return (
     <GlobalProvider>
       <Login/>
@@ -11,5 +9,8 @@ export default function Index() {
     // <DatabaseChat/>
     // <DropdownsPage/>
     // <TablePage/>
+    // <>
+    //   <Notifications/>
+    // </>
   );
 }

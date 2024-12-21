@@ -39,14 +39,24 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     console.log("Connection closed.");
     setLoading(false);
   };
+  const stopRecording = async () => {
+    try {
+      if (isRecording) {
+        await recording.stopAndUnloadAsync();
+        setRecording(null);
+        setIsRecording(false);
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error);
+    }
+  };
 
   async function transcripeAudio(uri) {
-    // Prepare FormData
     const formData = new FormData();
     formData.append('file', {
       uri: uri,
-      name: 'recording.m4a', // Change the name and extension based on your file
-      type: 'audio/m4a', // MIME type of the file
+      name: 'recording.m4a', 
+      type: 'audio/m4a', 
     });
   
     try {
@@ -233,7 +243,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       if (input){
         return
       }
-      if (recording) {
+      if (isRecording) {
         await recording.stopAndUnloadAsync();
         transcripeAudio(recording.getURI());
         console.log(recording, "from start")
@@ -259,28 +269,24 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
     }
   };
 
+  
+  
   const handleMicPressIn = () => {
-    if (!input == ""){
-      return
+    if (input.trim() === "") {
+      Animated.spring(scaleAnim, {
+        toValue: 3, 
+        useNativeDriver: true,
+      }).start();
     }
-    Animated.spring(scaleAnim, {
-      toValue: 1.2,
-      useNativeDriver: true,
-    }).start();
   };
 
   const handleMicPressOut = async () => {
-    // if (!input == ""){
-    //   return
-    // }
-
     Animated.spring(scaleAnim, {
       toValue: 1,
       useNativeDriver: true,
     }).start();
-
-    if (isRecording) {
-      await stopRecording();
+    if (isRecording){
+      await stopRecording()
     }
   };
 
@@ -356,7 +362,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
                 { color: "#FFFFFF" }
               ]}
             >
-              <Markdown style={{ body: { fontSize: 16, color: "#FFFFFF" } }}>
+              <Markdown style={{ body: { fontSize: 16, color: "#000" } }}>
                 {item.text}
               </Markdown>
             </Text>
@@ -368,19 +374,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
       </View>
     );
   };
-  const stopRecording = async () => {
-    try {
-      if (recording) {
-        await recording.stopAndUnloadAsync();
-        setAudioUri(recording.getURI());
-        setRecording(null);
-        setIsRecording(false);
-      }
-    } catch (error) {
-      console.error('Error stopping recording:', error);
-    }
-  };
-  
+ 
   return (
     <View style={styles.chatArea}>
       <FlatList
