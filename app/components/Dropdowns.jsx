@@ -122,7 +122,7 @@ console.log(value4);
       setLoading(true);
       try {
         const response = await api.get(
-          `company/document?DepartmentID=${value3}&ItemType=${value4}`
+          `/list/company/document?DepartmentID=${value3}&ItemType=${value4}`
         );
         setItems5(response.data.data);
       } catch (err) {
