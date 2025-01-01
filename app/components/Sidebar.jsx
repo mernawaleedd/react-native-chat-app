@@ -14,12 +14,11 @@ const Sidebar = ({ isVisible, onClose }) => {
   const {setUser,setIsLogged}=useGlobalContext()
 
   // Function to handle logout
-  const handleLogout = () => {
+  const handleLogout = async() => {
     onClose();
     setIsLogged(false)
     setUser(null)
-    const logot =async ()=> await logOut()
-    logot()
+    await logOut()
     router.replace("/");
   };
 

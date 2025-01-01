@@ -153,6 +153,7 @@ const ChatArea = ({ messages, setMessages, file, setFile, openCamera, openDocume
             // const responseText = await response.text(); // Read response as plain text
             console.log("Raw response:", response2);
               const result2 = await response2.json();
+              console.log(result2)
               context2 = JSON.parse(result2.results)
               console.log(context2)
               type = "db"
